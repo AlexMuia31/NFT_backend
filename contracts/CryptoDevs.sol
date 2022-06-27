@@ -1,4 +1,4 @@
-//SPDX-Lincese_Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -20,6 +20,9 @@ contract CryptoDevs is ERC721Enumerable, Ownable {
 
     uint256 public _price = 0.01 ether;
 
+    // _paused is used to pause the contract in case of an emergency
+    bool public _paused;
+
     // Whitelist contract instance
     IWhitelist whitelist;
 
@@ -34,10 +37,15 @@ contract CryptoDevs is ERC721Enumerable, Ownable {
 
     uint256 presaleEnded;
 
-    constructor(string memory _baseURI, address whitelistContract)
+    modifier onlyWhenNotPaused() {
+        require(!_paused, "Contract currently paused");
+        _;
+    }
+
+    constructor(string memory baseURI, address whitelistContract)
         ERC721("Crypto Devs", "CD")
     {
-        _baseTokenURI = _baseURI;
+        _baseTokenURI = baseURI;
         whitelist = IWhitelist(whitelistContract);
     }
 
@@ -54,7 +62,7 @@ contract CryptoDevs is ERC721Enumerable, Ownable {
     /**
      * @dev presaleMint allows a user to mint one NFT per transaction during the presale.
      */
-    function presaleMint() public payable {
+    function presaleMint() public payable onlyWhenNotPaused {
         require(
             presaleStarted && block.timestamp < presaleEnded,
             "Presale ended"
@@ -70,15 +78,47 @@ contract CryptoDevs is ERC721Enumerable, Ownable {
         _safeMint(msg.sender, tokenIds);
     }
 
-    function mint() public payable {
+    function mint() public payable onlyWhenNotPaused {
         require(
             presaleStarted && block.timestamp >= presaleEnded,
             "Presale has not ended yet"
         );
-        require(tokenIds < maxTokens, "Exceeded the limit");
+        require(tokenIds < maxTokenIds, "Exceeded the limit");
         require(msg.value >= _price, "Ether sent is not correct");
 
         tokenIds += 1;
         _safeMint(msg.sender, tokenIds);
     }
+
+    /**
+     * @dev _baseURI overides the Openzeppelin's ERC721 implementation which by default
+     * returned an empty string for the baseURI
+     */
+    function _baseURI() internal view virtual override returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    /**
+     * @dev setPaused makes the contract paused or unpaused
+     */
+    function setPaused(bool val) public onlyOwner {
+        _paused = val;
+    }
+
+    /**
+     * @dev withdraw sends all the ether in the contract
+     * to the owner of the contract
+     */
+    function withdraw() public onlyOwner {
+        address _owner = owner();
+        uint256 amount = address(this).balance;
+        (bool sent, ) = _owner.call{value: amount}("");
+        require(sent, "Failed to send Ether");
+    }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
 }
