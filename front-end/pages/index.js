@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
 import { providers ,Contract} from "ethers";
 import styles from "../styles/Home.module.css";
+import { NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS } from "../../constants";
 //import {NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS} from "../contants"
 
 export default function Home() {
   const [isOwner, setIsOwner] = useState(false);
-  const [isPresaleOngoing, setIsPresaleOngoing] = useState(false)
   const [presaleStarted, setPresaleStarted] = useState(false);
+  const [presaleEnded, setPresaleEnded]= useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const web3ModalRef = useRef();
 
@@ -52,6 +53,28 @@ export default function Home() {
       console.error(error)
     }
   }
+
+const checkIfPresaleEnded = async ()=>{
+  try{
+    const provider = await getProviderOrSigner();
+
+    const nftContract = new Contract(
+      NFT_CONTRACT_ADDRESS,
+      NFT_CONTRACT_ABI,
+      provider
+    );
+    //This will return a BigNumber because presaleEnded is a uint256
+    // this will return a timestamp in seconds
+    const presaleEndTime = await nftContract.presaleEnded();
+    const currentTimeInSeconds = Date.now() / 1000;
+    const hasPresaleEnded = presaleEndTime.lt(
+      Math.floor(currentTimeInSeconds)
+    );
+    setPresaleEnded(hasPresaleEnded)
+  }catch(error){
+    console.error(error)
+  }
+}
 
   const checkIfPresaleStarted = async()=>{
     try{
@@ -104,7 +127,7 @@ export default function Home() {
       });
       connectWallet();
 
-      checkIfPresaleStarted
+      checkIfPresaleStarted();
     }
   });
 
