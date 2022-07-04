@@ -2,12 +2,74 @@ import Head from "next/head";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
-import { providers } from "ethers";
+import { providers ,Contract} from "ethers";
 import styles from "../styles/Home.module.css";
+//import {NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS} from "../contants"
 
 export default function Home() {
+  const [isOwner, setIsOwner] = useState(false);
+  const [isPresaleOngoing, setIsPresaleOngoing] = useState(false)
+  const [presaleStarted, setPresaleStarted] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const web3ModalRef = useRef();
+
+
+  const getOwner= async ()=>{
+    try{
+      const signer =await getProviderOrSigner();
+
+      // Get an instance of the contract
+      const nftContract = new Contract(
+        NFT_CONTRACT_ADDRESS,
+        NFT_CONTRACT_ABI,
+        signer
+      );
+
+      const owner = nftContract.owner();
+      const userAddress = signer.getAddress();
+      
+      if (owner.toLowerCase() === userAddress.toLowerCase()){
+        setIsOwner(true)
+      }
+    }catch(error){
+      console.error(error)
+    }
+  }
+
+  const startPresale = async()=>{
+    try{
+      const signer = await getProviderOrSigner(true);
+      const nftContract = new Contract(
+        NFT_CONTRACT_ADDRESS,
+        NFT_CONTRACT_ABI,
+        signer
+      );
+      const txn = await nftContract.startPresale();
+      await txn.wait();
+
+      setPresaleStarted(true);
+    }catch(error){
+      console.error(error)
+    }
+  }
+
+  const checkIfPresaleStarted = async()=>{
+    try{
+      const provider = await getProviderOrSigner();
+
+      //get instance of the NFT Contract
+      const nftContract = new Contract(
+        NFT_CONTRACT_ADDRESS,
+        NFT_CONTRACT_ABI,
+        provider
+      );
+      const isPresaleStarted = await nftContract.presaleStarted();
+      setPresaleStarted(isPresaleStarted);
+    }
+    catch (error){
+      console.error(error);
+    }
+  }
 
   const connectWallet = async () => {
     await getProviderOrSigner();
@@ -41,6 +103,8 @@ export default function Home() {
         disableInjectedProvider: false,
       });
       connectWallet();
+
+      checkIfPresaleStarted
     }
   });
 
