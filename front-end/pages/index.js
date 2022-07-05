@@ -5,7 +5,7 @@ import Web3Modal from "web3modal";
 import { providers ,Contract} from "ethers";
 import styles from "../styles/Home.module.css";
 import { NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS } from "../../constants";
-//import {NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS} from "../contants"
+
 
 export default function Home() {
   const [isOwner, setIsOwner] = useState(false);
@@ -122,8 +122,12 @@ const checkIfPresaleEnded = async ()=>{
 
   const onPageLoad = async ()=>{
     await connectWallet();
+    await getOwner();
     const presaleStarted = await checkIfPresaleStarted();
-  }
+    if (presaleStarted){
+      await checkIfPresaleEnded();
+    }
+  };
 
   useEffect(() => {
     if (!walletConnected) {
@@ -137,6 +141,29 @@ const checkIfPresaleEnded = async ()=>{
     }
   });
 
+  function renderBody(){
+    if (!walletConnected){
+      return(
+        <button onClick={connectWallet} className={styles.button}>
+          Connect your Wallet
+        </button>
+      );
+    }
+    if (isOwner && !presaleStarted){
+      //render a button to start the presale
+    }
+    if (!presaleStarted){
+      //just say that presale has not started yet, come back later
+    }
+    if (presaleStarted && !presaleEnded){
+      //allow users to mint in presale
+      //they need to be in whitelist for this to work
+    }
+    if (presaleEnded){
+      //allow users to mint in presale
+    }
+  }
+
   return (
     <div className="">
       <Head>
@@ -148,11 +175,7 @@ const checkIfPresaleEnded = async ()=>{
         <link rel="icon" href="" />
       </Head>
       <div className={styles.main}>
-        {walletConnected ? null : (
-          <button onClick={connectWallet} className={styles.button}>
-            Connect Wallet
-          </button>
-        )}
+      
       </div>
     </div>
   );
