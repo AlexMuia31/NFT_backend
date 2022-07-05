@@ -9,6 +9,7 @@ import { NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS } from "../../constants";
 
 export default function Home() {
   const [isOwner, setIsOwner] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [presaleStarted, setPresaleStarted] = useState(false);
   const [presaleEnded, setPresaleEnded]= useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
@@ -190,6 +191,11 @@ const checkIfPresaleEnded = async ()=>{
         </button>
       );
     }
+
+  if (loading){
+    return <span className={styles.description}>Loading...</span>;
+  }
+
     if (isOwner && !presaleStarted){
       //render a button to start the presale
       return(
@@ -211,7 +217,7 @@ const checkIfPresaleEnded = async ()=>{
         <span className={styles.description}>
           Presale has started! If your address is Whitelisted, you can mint a CryptoDev
         </span>
-        <button className={styles.button}>
+        <button className={styles.button} onClick={presaleMint}>
           Presale Mint 🚀
         </button>
       </div>
@@ -223,7 +229,7 @@ const checkIfPresaleEnded = async ()=>{
           <span className={styles.description}>
             Presale has ended. You can mint a Cryptodev in public sale, if any remain
           </span>
-          <button className={styles.button}>  Public Mint 🚀</button>
+          <button className={styles.button} onClick={publicMint}>  Public Mint 🚀</button>
         </div>
       )
       
@@ -241,8 +247,18 @@ const checkIfPresaleEnded = async ()=>{
         <link rel="icon" href="" />
       </Head>
       <div className={styles.main}>
-      {renderBody()}
+        <div>
+          <h1 className={styles.title}>Welcome to CryptoDevs NFT</h1>
+          <span className="styles.description">
+            CryptoDevs NFT is a collection for developers in Web3
+          </span>
+          {renderBody()}
+        </div>
+      <img className={styles.image} src='/12.svg'/>
       </div>
+      <footer className={styles.footer}>
+        Made with &#10084; by Alex Muia
+      </footer>
     </div>
   );
 }
