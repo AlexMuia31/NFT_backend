@@ -2,7 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
-import { providers ,Contract} from "ethers";
+import { providers ,Contract, utils} from "ethers";
 import styles from "../styles/Home.module.css";
 import { NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS } from "../../constants";
 
@@ -15,9 +15,50 @@ export default function Home() {
   const web3ModalRef = useRef();
 
 
+  const presaleMint = async ()=>{
+    try{
+      const signer = await getProviderOrSigner(true);
+
+      const nftContract = new Contract(
+        NFT_CONTRACT_ADDRESS,
+        NFT_CONTRACT_ABI,
+        signer
+      );
+      const txn = await nftContract.presaleMint({
+        value:utils.parseEther("0.01")
+      })
+      await txn.wait();
+
+      window.alert("You successfully minted a CryptoDev!");
+    }catch(error){
+      console.error(error)
+    }
+  }
+
+  const publicMint = async ()=>{
+    try{
+      const signer = await getProviderOrSigner(true);
+
+      const nftContract = new Contract(
+        NFT_CONTRACT_ADDRESS,
+        NFT_CONTRACT_ABI,
+        signer
+      );
+      const txn = await nftContract.mint({
+        value:utils.parseEther("0.01")
+      })
+      await txn.wait();
+
+      window.alert("You successfully minted a CryptoDev!");
+    }catch(error){
+      console.error(error)
+    }
+  }
+
+
   const getOwner= async ()=>{
     try{
-      const signer =await getProviderOrSigner();
+      const signer =await getProviderOrSigner(true);
 
       // Get an instance of the contract
       const nftContract = new Contract(
@@ -26,10 +67,10 @@ export default function Home() {
         signer
       );
 
-      const owner = nftContract.owner();
-      const userAddress = signer.getAddress();
+      const owner = await nftContract.owner();
+      const userAddress = await signer.getAddress();
       
-      if (owner.toLowerCase() === userAddress.toLowerCase()){
+      if (owner.toLowerCase() ===  userAddress.toLowerCase()){
         setIsOwner(true)
       }
     }catch(error){
@@ -151,16 +192,41 @@ const checkIfPresaleEnded = async ()=>{
     }
     if (isOwner && !presaleStarted){
       //render a button to start the presale
+      return(
+        <button onClick={startPresale} className={styles.button}>Start Presale</button>
+      )
     }
     if (!presaleStarted){
       //just say that presale has not started yet, come back later
+      return(
+        <span className={styles.description}>
+          Presale has not started yet. Come back later
+        </span>
+      )
     }
     if (presaleStarted && !presaleEnded){
       //allow users to mint in presale
       //they need to be in whitelist for this to work
+      <div>
+        <span className={styles.description}>
+          Presale has started! If your address is Whitelisted, you can mint a CryptoDev
+        </span>
+        <button className={styles.button}>
+          Presale Mint 🚀
+        </button>
+      </div>
     }
     if (presaleEnded){
-      //allow users to mint in presale
+      //allow users to take part in public sale
+      return (
+        <div>
+          <span className={styles.description}>
+            Presale has ended. You can mint a Cryptodev in public sale, if any remain
+          </span>
+          <button className={styles.button}>  Public Mint 🚀</button>
+        </div>
+      )
+      
     }
   }
 
@@ -175,7 +241,7 @@ const checkIfPresaleEnded = async ()=>{
         <link rel="icon" href="" />
       </Head>
       <div className={styles.main}>
-      
+      {renderBody()}
       </div>
     </div>
   );
