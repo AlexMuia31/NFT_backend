@@ -88,9 +88,12 @@ const checkIfPresaleEnded = async ()=>{
       );
       const isPresaleStarted = await nftContract.presaleStarted();
       setPresaleStarted(isPresaleStarted);
+
+      return isPresaleStarted;
     }
     catch (error){
       console.error(error);
+      return false;
     }
   }
 
@@ -117,6 +120,11 @@ const checkIfPresaleEnded = async ()=>{
     return web3Provider;
   };
 
+  const onPageLoad = async ()=>{
+    await connectWallet();
+    const presaleStarted = await checkIfPresaleStarted();
+  }
+
   useEffect(() => {
     if (!walletConnected) {
       //instantiate Web3Modal
@@ -125,9 +133,7 @@ const checkIfPresaleEnded = async ()=>{
         providerOptions: {},
         disableInjectedProvider: false,
       });
-      connectWallet();
-
-      checkIfPresaleStarted();
+    onPageLoad();
     }
   });
 
